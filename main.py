@@ -1,4 +1,7 @@
 import math
+import glob, os
+
+
 FoundTable = []
 def CompressRotation(rotation):
 	return rotation - math.floor(rotation/360.0)*360.0
@@ -23,6 +26,7 @@ def loadDat(id,path):
         if files and files[0] == "IPL":
             ipl = files[1].strip()
             findModelEntryInIDE(id,path+"/"+ipl.replace("\\","/"))
+
 def findModelEntryInIDE(id,path):
     print("READ IPL: {}".format(path))
     f = open(path, "r")
@@ -41,9 +45,15 @@ def findModelEntryInIDE(id,path):
         if l.strip() == "inst":
             tag = True
 # Press the green button in the gutter to run the script.
+def readFileFromData(id):
+    os.chdir("data/all")
+    for file in glob.glob("*.ipl"):
+        path = "E:/dev/sa_object_finder/data/all/"+file
+        findModelEntryInIDE(id, path)
 if __name__ == '__main__':
-    SA_HOME = "/Users/nurupo/Desktop/GTA San Andreas"
-    loadDat(2605,SA_HOME)
+    SA_HOME = "D:\Game\GTASA"
+    #loadDat(2605,SA_HOME)
+    readFileFromData(11631)
     for item in FoundTable:
         model = item[0]
         dff = item[1]
