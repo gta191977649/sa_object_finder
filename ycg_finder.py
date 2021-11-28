@@ -1,5 +1,6 @@
 # FGAM TAG
 import struct
+Textures = []
 
 
 
@@ -25,36 +26,59 @@ def dumpTxd(file):
             s = struct.unpack(struct_fmt, data)
             (id, chunk_size, rw_version) = s
             # txd_texture_data_t
-            struct_fmt = "IIIII32c32cIIHHbbbbbI"
-
+            struct_fmt = "IIIII32s32sIIHHbbbb"
             data = f.read(struct.calcsize(struct_fmt))
             s = struct.unpack(struct_fmt, data)
+            depth = s[-4]
+            midmaps_count = s[-3]
+            txd_name = str(s[5],"ANSI").replace("\0","")
 
-            data_size = s[-1]
-            print( s)
-            # skip texture data
-            print(data_size)
-            f.read(data_size)
-            # mipmaps_s
+            #print("General Info")
+            #print(s)
+            if depth == 8:
+                f.read(256 * 4)
+            #read datasize
             struct_fmt = "I"
             data = f.read(struct.calcsize(struct_fmt))
-
             s = struct.unpack(struct_fmt, data)
-            print(s)
-            print(s[0])
-            f.read(s[0])
+            data_size = s[0]
+            # skip texture data
+            f.read(data_size)
+            # mipmaps_s
+            #print("Process midmaps sections")
+            for midmaps in range(midmaps_count-1):
+                struct_fmt = "I"
+                data = f.read(struct.calcsize(struct_fmt))
+                s = struct.unpack(struct_fmt, data)
+                mipmaps_size = s[0]
+                #print(mipmaps_size)
+                f.read(mipmaps_size)
+
             # txd_extra_info_s
+            #print("Extension Data:")
             struct_fmt = "III"
             data = f.read(struct.calcsize(struct_fmt))
             s = struct.unpack(struct_fmt, data)
             (id, chunk_size, rw_version) = s
-            print(rw_version)
-            f.read(chunk_size)
+            #print("RW_VER: {}".format(hex(rw_version)))
+            # read extension data
+            struct_fmt = "{}s".format(chunk_size)
+            data = f.read(struct.calcsize(struct_fmt))
+            s = struct.unpack(struct_fmt, data)
+            extension = s[0]
+            Textures.append({
+                "txd_name" : txd_name,
+                "rw_version": rw_version,
+                "is_ycg": b"FGAM" in extension,
+            })
 
 
+def listYCGTxds():
+    for txd in Textures:
+        if txd["is_ycg"]:
+            print(txd["txd_name"])
 
 
-
-
-
-dumpTxd("E:\\dev\\vcs_map_e3\\img\\airporterminal.txd")
+if __name__ == '__main__':
+    dumpTxd("./airporterminal.txd")
+    listYCGTxds()
