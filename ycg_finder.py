@@ -1,9 +1,6 @@
 # FGAM TAG
 import struct
 Textures = []
-
-
-
 def dumpTxd(file):
     with open(file, "rb") as f:
         # txd_file_t
