@@ -1,5 +1,6 @@
 # FGAM TAG
 import struct
+import os
 Textures = []
 def dumpTxd(file):
     with open(file, "rb") as f:
@@ -26,12 +27,15 @@ def dumpTxd(file):
             struct_fmt = "IIIII32s32sIIHHbbbb"
             data = f.read(struct.calcsize(struct_fmt))
             s = struct.unpack(struct_fmt, data)
+
+            #print(s)
             depth = s[-4]
             midmaps_count = s[-3]
             txd_name = str(s[5],"ANSI").replace("\0","")
 
             #print("General Info")
             #print(s)
+            # Dump pattern
             if depth == 8:
                 f.read(256 * 4)
             #read datasize
@@ -40,7 +44,8 @@ def dumpTxd(file):
             s = struct.unpack(struct_fmt, data)
             data_size = s[0]
             # skip texture data
-            f.read(data_size)
+
+            txd_data = f.read(data_size)
             # mipmaps_s
             #print("Process midmaps sections")
             for midmaps in range(midmaps_count-1):
@@ -63,19 +68,40 @@ def dumpTxd(file):
             data = f.read(struct.calcsize(struct_fmt))
             s = struct.unpack(struct_fmt, data)
             extension = s[0]
+
             Textures.append({
                 "txd_name" : txd_name,
                 "rw_version": rw_version,
-                "is_ycg": b"FGAM" in extension,
+                "is_ycg": b"GCY" in extension,
             })
 
+def dumpAllTxds():
+    path = "E:\\dev\\mta-vcs\\mods\\deathmatch\\resources\\[vcs]\\vcs\\Content\\textures"
+    for root, dirs, files in os.walk(path):
+        for name in files:
+            if name.endswith((".txd")):
+                fullpath = "{}\\{}".format(path, name)
+                dumpTxd(fullpath)
 
-def listYCGTxds():
+def writeOutYCGTxds():
+    output = ""
+    total = 0
     for txd in Textures:
         if txd["is_ycg"]:
-            print(txd["txd_name"])
-
+            output = output + txd["txd_name"] + "\n"
+            total = total + 1
+    f = open("raw_textures.txt", "w")
+    f.write(output)
+    f.close()
+    print("Total: {}".format(total))
+def printYCGTable():
+    print("{\n")
+    for txd in Textures:
+        if txd["is_ycg"]:
+            print("\t\"{}\",".format(txd["txd_name"]))
+    print("}")
 
 if __name__ == '__main__':
-    dumpTxd("./airporterminal.txd")
-    listYCGTxds()
+    dumpTxd("./golfvegealpha.txd")
+    #dumpAllTxds()
+    printYCGTable()
